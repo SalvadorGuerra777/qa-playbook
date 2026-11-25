@@ -23,7 +23,7 @@ A flaky test passes and fails on the same code. Rerunning until green hides real
 | Shared data | Fails only in parallel or after a specific test | Unique data per test, or create and clean up in fixtures |
 | Test order | Fails when run alone, or only when run after another test | Remove hidden dependencies between tests |
 | Shared account state | Account locked, cart not empty, session expired | Separate accounts for negative tests, reset state before the test |
-| Environment | Slow responses, only on CI runners | Check timeouts against measured times, fewer workers on shared demos |
+| Environment | Slow responses, blocked requests, only on CI runners | Log pending and failed requests on the runner; run the app in CI if a shared environment blocks it |
 | Real product bug | Same failure under the same conditions | Report it, don't hide it in the test |
 
 ## 4. Decide
@@ -40,4 +40,4 @@ From [playwright-ui-api-tests](https://github.com/SalvadorGuerra777/playwright-u
 - **Quantity reset:** the product page reset the quantity field when its API call finished after the test typed. Fix: wait for the product response before typing.
 - **Account lockout:** negative login tests used a wrong password on the shared demo account, and after a few runs the API returned `423 Account locked`, breaking the positive test. Fix: negative tests use an email that doesn't exist.
 - **CORS preflight:** `waitForResponse` matched the `OPTIONS` request before the `POST`. Fix: filter by method.
-- **Page never loads on CI runners only:** passes locally every time. Skipped in CI with the reason in the code; login is still covered by API tests.
+- **Page never loads on CI runners only:** passed locally every time. A diagnostic run that logged every request showed the real cause: after login, Cloudflare answered the GitHub runners with a bot check (`403`, "Just a moment..."). Not a flaky test and not an app bug, so instead of skipping it, CI now runs the app itself in Docker and the test runs again.
